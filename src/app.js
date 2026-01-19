@@ -11,7 +11,14 @@ const messageRoutes = require("./modules/messages/message.routes");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://muted-nine.vercel.app",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
