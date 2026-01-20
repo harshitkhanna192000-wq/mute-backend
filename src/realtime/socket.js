@@ -59,6 +59,7 @@ const setupSocket = (server) => {
       });
       socket.broadcast.emit("user:offline", {
         userId: socket.user.id,
+        lastSeen: new Date(),
       });
       console.log("🔴 Socket disconnected:", socket.id);
     });
