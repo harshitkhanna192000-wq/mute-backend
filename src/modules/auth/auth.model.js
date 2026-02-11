@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
     type: String,
     default: null,
   },
+      onboardingComplete: { type: Boolean, default: false },
+
   isOnline: {  // ✅ ADD THIS
       type: Boolean,
       default: false,

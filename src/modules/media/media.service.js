@@ -1,10 +1,9 @@
 const cloudinary = require("../../config/cloudinary");
 const Media = require("./media.model");
+const fs = require("fs/promises");
 
 const uploadMedia = async (file, userId) => {
-  if (!file) {
-    throw new Error("No file provided");
-  }
+  if (!file) throw new Error("No file provided");
 
   const resourceType =
     file.mimetype.startsWith("image")
@@ -13,9 +12,18 @@ const uploadMedia = async (file, userId) => {
       ? "video"
       : "raw";
 
-  const result = await cloudinary.uploader.upload(file.path, {
-    resource_type: resourceType
-  });
+  let result;
+  try {
+    result = await cloudinary.uploader.upload(file.path, {
+      resource_type: resourceType,
+      folder: "muted", // optional
+    });
+  } finally {
+    // ✅ IMPORTANT: clean local file even if cloudinary fails partially
+    try {
+      await fs.unlink(file.path);
+    } catch (_) {}
+  }
 
   const media = await Media.create({
     owner: userId,
@@ -23,7 +31,7 @@ const uploadMedia = async (file, userId) => {
     publicId: result.public_id,
     type: resourceType === "raw" ? "file" : resourceType,
     format: result.format,
-    size: result.bytes
+    size: result.bytes,
   });
 
   return media;

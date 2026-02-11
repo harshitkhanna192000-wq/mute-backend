@@ -3,8 +3,10 @@ const jwt = require("jsonwebtoken");
 const registerHandlers = require("./socket.handlers");
 const User = require("../modules/auth/auth.model");
 
-
 const onlineUsers = new Map();
+
+let ioInstance = null;
+const getIO = () => ioInstance;
 
 const setupSocket = (server) => {
   const io = new Server(server, {
@@ -14,13 +16,13 @@ const setupSocket = (server) => {
     },
   });
 
+  ioInstance = io;
+
   // 🔐 Auth middleware
   io.use((socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
-      if (!token) {
-        return next(new Error("Authentication required"));
-      }
+      if (!token) return next(new Error("Authentication required"));
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.user = { id: decoded.userId };
@@ -37,35 +39,43 @@ const setupSocket = (server) => {
 
     await User.findByIdAndUpdate(socket.user.id, {
       isOnline: true,
+      lastSeen: null,
     });
 
-     socket.emit("users:online:list", {
-    users: Array.from(onlineUsers.keys()),
-  });
+    // ✅ Send initial online list to this user
+    socket.emit("users:online:list", {
+      users: Array.from(onlineUsers.keys()),
+    });
 
+    // ✅ notify others
     socket.broadcast.emit("user:online", {
       userId: socket.user.id,
     });
 
-    // ✅ PASS onlineUsers
+    // ✅ register handlers
     registerHandlers(io, socket, onlineUsers);
 
     socket.on("disconnect", async () => {
       onlineUsers.delete(socket.user.id);
 
+      const lastSeen = new Date();
+
       await User.findByIdAndUpdate(socket.user.id, {
         isOnline: false,
-        lastSeen: new Date(),
+        lastSeen,
       });
+
       socket.broadcast.emit("user:offline", {
         userId: socket.user.id,
-        lastSeen: new Date(),
+        lastSeen,
       });
+
       console.log("🔴 Socket disconnected:", socket.id);
     });
-
-
   });
+
+  return io;
 };
 
 module.exports = setupSocket;
+module.exports.getIO = getIO;

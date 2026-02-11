@@ -13,7 +13,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://muted-nine.vercel.app",
+    origin: ["https://muted-nine.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true
   })

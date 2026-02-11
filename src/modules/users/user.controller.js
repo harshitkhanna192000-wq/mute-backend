@@ -49,17 +49,18 @@ const updateMe = async (req, res) => {
       return res.status(400).json({ message: "Display name is required" });
     }
 
-    // Fetch the user from the DB
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update the displayName and save
     user.displayName = displayName;
+
+    // ✅ ADD THIS (only needs to happen once, but safe to set again)
+    user.onboardingComplete = true;
+
     await user.save();
 
-    // Remove password before sending response
     const userObj = user.toObject();
     delete userObj.password;
 
@@ -68,6 +69,7 @@ const updateMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 const findByEmail = async (req, res) => {
