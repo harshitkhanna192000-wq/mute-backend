@@ -30,6 +30,7 @@ const register = async ({ email, password, displayName, fullName }) => {
       _id: user._id,
       email: user.email,
       displayName: user.displayName,
+      avatar: user.avatar, // ✅
       onboardingComplete: user.onboardingComplete, // ✅ include
     },
   };
@@ -50,6 +51,7 @@ const login = async ({ email, password }) => {
       _id: user._id,
       email: user.email,
       displayName: user.displayName,
+      avatar: user.avatar, // ✅
       onboardingComplete: user.onboardingComplete, // ✅ include
     },
   };
